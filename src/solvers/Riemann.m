@@ -34,13 +34,13 @@ guess_type = 0;
 Iter_Limit = 10000;
 TOL = 1e-6;
 
-Pstar = pGuess(guess_type, PL, PR, uL, uR, rhoL, rhoR, g, du);
+Pstar = Pguess(guess_type, PL, PR, uL, uR, rhoL, rhoR, g, du);
 [Pstar, error] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
 
 while abs(error) > TOL || error < 0
     if guess_type <= 2
         guess_type = guess_type + 1;
-        Pstar = pGuess(guess_type, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar = Pguess(guess_type, PL, PR, uL, uR, rhoL, rhoR, g, du);
         [Pstar, error] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
     elseif guess_type > 2 && guess_type < 4
         guess_type = guess_type + 1;
@@ -48,11 +48,11 @@ while abs(error) > TOL || error < 0
         [Pstar, error] = bisectionP(PL, PR, uL, uR, rhoL, rhoR, g, du, 10*Iter_Limit, TOL);
     else
         disp('Cannot Numerically find Pstar, Please Solve Graphically');
-        Pstar0 = pGuess(0, PL, PR, uL, uR, rhoL, rhoR, g, du);
-        Pstar1 = pGuess(1, PL, PR, uL, uR, rhoL, rhoR, g, du);
-        Pstar2 = pGuess(2, PL, PR, uL, uR, rhoL, rhoR, g, du);
-        Pstar3 = pGuess(3, PL, PR, uL, uR, rhoL, rhoR, g, du);
-        Pstar4 = pGuess(4, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar0 = Pguess(0, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar1 = Pguess(1, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar2 = Pguess(2, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar3 = Pguess(3, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar4 = Pguess(4, PL, PR, uL, uR, rhoL, rhoR, g, du);
         Pstara = min([Pstar0,Pstar1,Pstar2,Pstar3,Pstar4]);
         Pstarb = max([Pstar0,Pstar1,Pstar2,Pstar3,Pstar4]);
         Pstars = linspace(Pstara, Pstarb, 1000);
