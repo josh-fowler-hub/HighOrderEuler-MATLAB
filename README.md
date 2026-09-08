@@ -1,4 +1,4 @@
-# HighOrderRoeWENOSolver
+# HighOrderEuler-MATLAB
 
 A MATLAB implementation of high-order finite-volume solvers for the one-dimensional compressible Euler equations. This project supports multiple Riemann solvers (Roe, Roe-Pike, HLL, HLLC, Osher), high-order WENO/MUSCL reconstruction, and strong stability preserving Runge-Kutta (SSPRK) time integration.
 
