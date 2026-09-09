@@ -1,5 +1,8 @@
 function filePre = makeFilePrefix(Schemes, test_num, n, cfl, riemann_solver, CD_Term_Order)
 % Construct a prefix for output filenames based on configuration
+% FIXED: body previously assigned to `file_pre`, a different variable
+% from the declared output `filePre`, so this function never returned a
+% value.
 if strcmp(riemann_solver, 'Roe')
     solver = 'Roe';
 elseif strcmp(riemann_solver, 'Roe-Pike')
@@ -30,6 +33,6 @@ else
     order = ['CD' num2str(CD_Term_Order)];
 end
 
-file_pre = ['Test' num2str(test_num) order Scheme_Path 'CFL'...
+filePre = ['Test' num2str(test_num) order Scheme_Path 'CFL'...
             num2str(cfl) 'Nodes' num2str(n) solver];
 end

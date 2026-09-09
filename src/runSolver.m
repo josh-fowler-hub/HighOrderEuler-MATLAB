@@ -119,6 +119,23 @@ for testidx = 1:numel(config.test_num)
                                         error('Unknown time integration method: %s', time_int);
                                 end
 
+                                % FIXED: previously an unstable run (e.g. a
+                                % scheme/test-case combination that develops
+                                % negative density/NaN) would trigger
+                                % calculateTimeStep's NaN fallback (dt=1e-6)
+                                % every step from then on, turning a diverged
+                                % run into an effectively infinite loop
+                                % (hundreds of thousands of no-op steps to
+                                % reach t). Stop immediately once the state is
+                                % no longer finite, since the result is
+                                % already invalid and further stepping cannot
+                                % recover it.
+                                if any(~isfinite(U(:)))
+                                    warning('runSolver: non-finite state detected at time=%g (step %d) for test %d, solver=%s, recon=%s, time_int=%s - stopping this run early.', ...
+                                        time, steps, test, solver, rec, time_int);
+                                    break;
+                                end
+
                                 % Make a plot at each time step if requested
                                 if config.plot_in_time
                                     clf(1,'reset');
@@ -142,7 +159,14 @@ for testidx = 1:numel(config.test_num)
                             % Plot the Results at the end of the run
                             if ~config.plot_in_time
                                 makePlots(U,xs,gamma,flux,lam,rec,Order,xidx,k,config.extra_prim_var_plot,solver);
-                                configurePlots(rec,test_num,cells,cfl,config.extra_prim_var_plot,solver,Order,config.plot_folder);
+                                % FIXED: previously referenced bare test_num/cells/cfl,
+                                % which are undefined in this scope (only test /
+                                % config.cells / config.cfl are). Also previously
+                                % passed `rec` (a plain char array, e.g. 'WENO5')
+                                % where makeFilePrefix/configurePlots expect a cell
+                                % array of scheme names (as config.recon itself is)
+                                % - length('WENO5')==5 made it iterate per-character.
+                                configurePlots({rec},test,config.cells,config.cfl,config.extra_prim_var_plot,solver,Order,config.plot_folder);
                             end
                             if config.plot_in_time
                                 Riemann(rhoL,uL,PL,rhoR,uR,PR,t,middle,R,gamma,config.cells,config.extra_prim_var_plot);

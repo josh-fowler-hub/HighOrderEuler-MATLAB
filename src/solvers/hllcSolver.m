@@ -1,60 +1,77 @@
 function [Fip12,Fim12] = hllcSolver(U,URi,ULi,URim1,ULim1,xs,gamma,time)
-% hllcSolver - HLLC approximate Riemann solver (vectorized over interfaces)
+% hllcSolver - HLLC approximate Riemann solver (Toro Ch. 10), vectorized
+% over interfaces. Computed independently at both the i+1/2 interface
+% (from ULi/URi) and the i-1/2 interface (from ULim1/URim1).
+%
+% FIXED: previously ignored URim1/ULim1 entirely and set Fim12 = Fip12
+% (both computed from the current interface only), which zeroed out the
+% finite-volume flux difference at every cell. Also previously used the
+% plain two-wave HLL average formula in the "middle" region rather than
+% genuine HLLC star-state fluxes (the contact-preserving "C" was absent).
 %
 % Inputs:
-%   U      - full conservative state array (unused except for size)
-%   URi    - right reconstructed state at interface
-%   ULi    - left reconstructed state at interface
-%   URim1  - right reconstructed state at previous interface
-%   ULim1  - left reconstructed state at previous interface
+%   U      - full conservative state array (unused except for signature
+%            uniformity with the other Riemann solvers)
+%   URi    - right reconstructed state at interface i+1/2
+%   ULi    - left reconstructed state at interface i+1/2
+%   URim1  - right reconstructed state at interface i-1/2
+%   ULim1  - left reconstructed state at interface i-1/2
 %   xs      - grid locations (unused)
 %   gamma   - ratio of specific heats
 %   time    - current time (unused)
 %
 % Outputs:
-%   Fip12, Fim12 - numerical fluxes on the right and left side of each interface
+%   Fip12, Fim12 - numerical fluxes on the right and left side of each cell
 
-% Primitive variables at each interface state
-[rhoLi, uLi, PLi, aLi, HLi, ~, ~, ~] = consToPrim(ULi, gamma);
-[rhoRi, uRi, PRi, aRi, HRi, ~, ~, ~] = consToPrim(URi, gamma);
-
-% Estimate wave speeds via Roe average + entropy fix (vectorized)
-[ustarL,ustarR,astarL,astarR] = adaptiveRiemannSolver(rhoLi,rhoRi,uLi,uRi,aLi,aRi,PLi,PRi,gamma);
-SL = ustarL - astarL;
-SR = ustarR + astarR;
-
-% Fluxes for left and right states
-FLi = Fvec(rhoLi,uLi,PLi,gamma);
-FRi = Fvec(rhoRi,uRi,PRi,gamma);
-
-% Allocate output arrays
-Fip12 = zeros(size(ULi));
-Fim12 = zeros(size(ULi));
-
-% Regions
-maskL = SL >= 0;
-maskR = SR <= 0;
-maskM = ~(maskL | maskR);
-
-% Left region: use left flux
-Fip12(:,maskL) = FLi(:,maskL);
-Fim12(:,maskL) = FLi(:,maskL);
-
-% Right region: use right flux
-Fip12(:,maskR) = FRi(:,maskR);
-Fim12(:,maskR) = FRi(:,maskR);
-
-% Middle region: HLLC star-region flux (vectorized)
-if any(maskM)
-    SLm = SL(maskM);
-    SRm = SR(maskM);
-    FLm = FLi(:,maskM);
-    FRm = FRi(:,maskM);
-    ULm = ULi(:,maskM);
-    URm = URi(:,maskM);
-
-    Fstar = (SRm .* FLm - SLm .* FRm + SLm .* SRm .* (URm - ULm)) ./ (SRm - SLm);
-    Fip12(:,maskM) = Fstar;
-    Fim12(:,maskM) = Fstar;
+Fip12 = hllcFlux(ULi, URi, gamma);
+Fim12 = hllcFlux(ULim1, URim1, gamma);
 end
+
+function F = hllcFlux(UL, UR, gamma)
+% Genuine HLLC flux (Toro eq. 10.37-10.43) between left state UL and
+% right state UR.
+
+[rhoL, uL, pL, aL, ~, ~, ~, ~] = consToPrim(UL, gamma);
+[rhoR, uR, pR, aR, ~, ~, ~, ~] = consToPrim(UR, gamma);
+
+% Outer wave-speed bounds via the adaptive (Toro 9.3-9.5) estimate, same
+% as used by the other approximate Riemann solvers in this codebase.
+% FIXED: floored/ceilinged against the raw data wave speeds uL-aL/uR+aR
+% (standard Toro/Einfeldt robust HLL(C) wave-speed estimate) - the
+% adaptive estimate alone can under-bound the true wave fan at some
+% interfaces, which destabilizes the scheme (see hllSolver.m for the
+% numerical confirmation).
+[ustar, astarL, astarR] = adaptiveRiemannSolver(rhoL, rhoR, uL, uR, aL, aR, pL, pR, gamma);
+SL = min(uL - aL, ustar - astarL);
+SR = max(uR + aR, ustar + astarR);
+
+FL = Fvec(rhoL, uL, pL, gamma);
+FR = Fvec(rhoR, uR, pR, gamma);
+
+EL = UL(3,:); % total energy per unit volume
+ER = UR(3,:);
+
+% Contact (middle) wave speed, Toro eq. 10.37
+SM = (pR - pL + rhoL.*uL.*(SL-uL) - rhoR.*uR.*(SR-uR)) ./ (rhoL.*(SL-uL) - rhoR.*(SR-uR));
+
+% Star states, Toro eq. 10.39
+coefL = rhoL.*(SL-uL)./(SL-SM);
+UstarL = [coefL; coefL.*SM; coefL.*(EL./rhoL + (SM-uL).*(SM + pL./(rhoL.*(SL-uL))))];
+
+coefR = rhoR.*(SR-uR)./(SR-SM);
+UstarR = [coefR; coefR.*SM; coefR.*(ER./rhoR + (SM-uR).*(SM + pR./(rhoR.*(SR-uR))))];
+
+FstarL = FL + SL.*(UstarL - UL);
+FstarR = FR + SR.*(UstarR - UR);
+
+F = zeros(size(UL));
+maskL  = SL >= 0;
+maskML = (SL < 0) & (SM >= 0);
+maskMR = (SM < 0) & (SR >= 0);
+maskR  = SR < 0;
+
+F(:,maskL)  = FL(:,maskL);
+F(:,maskML) = FstarL(:,maskML);
+F(:,maskMR) = FstarR(:,maskMR);
+F(:,maskR)  = FR(:,maskR);
 end

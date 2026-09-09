@@ -1,4 +1,10 @@
 function U = SSPRKN(order,U,dt)
+% NOTE: dead code, unreachable from runSolver.m (not in its time_int
+% dispatch). Also broken as written: computeFluxDerivative is called
+% with 1 argument instead of the 11 its real signature requires, the
+% Uvec row-stacking doesn't match the 3xN conservative-variable
+% convention used elsewhere, and the declared output `U` is never
+% assigned (only local `Um` is computed). Left as-is / not ported.
 alpha = SSPRKcoeffs(order);
 Uvec = [U];
 for i = 1:order

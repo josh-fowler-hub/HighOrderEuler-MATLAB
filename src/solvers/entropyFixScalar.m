@@ -1,6 +1,10 @@
 function lambda = entropyFixScalar(lambda, delta)
 % entropyFixScalar - apply Harten-Hyman entropy fix
 %
+% NOTE: dead code, never called anywhere in src/ (the active solvers use
+% entropyFix.m, a different Toro-based transonic-rarefaction fix). Left
+% as-is / not ported.
+%
 % This helper performs the Harten-Hyman entropy fix on the eigenvalues
 % used in a Roe linearization. It preserves the correct amount of
 % dissipation near sonic points.

@@ -1,5 +1,8 @@
 function folderPath = makePath(Schemes, test_num, n, cfl, flux_limiter, recon, CD_Term_Order, riemann_solver)
 % Build folder path for saving figures based on configuration
+% FIXED: body previously assigned to `Folder_Path`, a different variable
+% from the declared output `folderPath`, so this function never returned
+% a value.
 if length(recon) ~= 1
     Scheme_Path = [];
     for i = 1:length(recon)
@@ -18,7 +21,7 @@ if length(recon) ~= 1
             Scheme_Path = [Scheme_Path cdname '_v_'];
         end
     end
-    Folder_Path = ['Figures/Test#' num2str(test_num) '/'...
+    folderPath = ['Figures/Test#' num2str(test_num) '/'...
                     Scheme_Path num2str(n) '_Nodes' '/'...
                     'CFL=' num2str(cfl) '/'];
 else
@@ -97,7 +100,7 @@ else
                 Scheme_Path = [Scheme_Path cdname '_v_'];
             end
         end
-        Folder_Path = ['Figures/Test#' num2str(test_num) '/'...
+        folderPath = ['Figures/Test#' num2str(test_num) '/'...
                         Scheme_Path flux_lim num2str(n) '_Nodes' '/'...
                         'CFL=' num2str(cfl) '/'];
     else
@@ -111,16 +114,16 @@ else
                 Scheme_Path = [Scheme_Path cdname '_v_'];
             end
         end
-        Folder_Path = ['Figures/Test#' num2str(test_num) '/'...
+        folderPath = ['Figures/Test#' num2str(test_num) '/'...
                         Scheme_Path num2str(n) '_Nodes' '/'...
                         'CFL=' num2str(cfl) '/'];
     end
 end
 
-mssg = ['Results being saved in:\n\t.../', Folder_Path, '\n\n'];
+mssg = ['Results being saved in:\n\t.../', folderPath, '\n\n'];
 
-if ~exist(Folder_Path, 'dir')
-    mkdir(Folder_Path)
+if ~exist(folderPath, 'dir')
+    mkdir(folderPath)
     fprintf(mssg);
 else
     fprintf(mssg);

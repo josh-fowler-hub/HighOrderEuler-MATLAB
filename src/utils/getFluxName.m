@@ -1,43 +1,45 @@
 function fluxLim = getFluxName(flux)
 % Map flux-limiter ID to a string name
+% FIXED: body previously assigned to `flux_lim`, a different variable from
+% the declared output `fluxLim`, so this function never returned a value.
 switch flux
     case 1
-        flux_lim = 'MM';
+        fluxLim = 'MM';
     case 2
-        flux_lim = 'VL';
+        fluxLim = 'VL';
     case 3
-        flux_lim = 'BJ';
+        fluxLim = 'BJ';
     case 4
-        flux_lim = 'SB';
+        fluxLim = 'SB';
     case 5
-        flux_lim = 'VA2';
+        fluxLim = 'VA2';
     case 6
-        flux_lim = 'VA1';
+        fluxLim = 'VA1';
     case 7
-        flux_lim = 'CHARM';
+        fluxLim = 'CHARM';
     case 8
-        flux_lim = 'HCUS';
+        fluxLim = 'HCUS';
     case 9
-        flux_lim = 'HQUICK';
+        fluxLim = 'HQUICK';
     case 10
-        flux_lim = 'Koren';
+        fluxLim = 'Koren';
     case 11
-        flux_lim = 'MC';
+        fluxLim = 'MC';
     case 12
-        flux_lim = 'Osher';
+        fluxLim = 'Osher';
     case 13
-        flux_lim = 'Ospre';
+        fluxLim = 'Ospre';
     case 14
-        flux_lim = 'Smart';
+        fluxLim = 'Smart';
     case 15
-        flux_lim = 'Sweby';
+        fluxLim = 'Sweby';
     case 16
-        flux_lim = 'UMIST';
+        fluxLim = 'UMIST';
     case 17
-        flux_lim = 'GMM';
+        fluxLim = 'GMM';
     case 18
-        flux_lim = '';
+        fluxLim = '';
     otherwise
-        flux_lim = '';
+        fluxLim = '';
 end
 end

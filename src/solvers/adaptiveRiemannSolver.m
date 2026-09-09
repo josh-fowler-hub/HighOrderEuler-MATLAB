@@ -39,9 +39,13 @@ ustarR = zeros(size(uLim1));
 ustarL = zeros(size(uLim1));
 
 % PVRS (Toro 9.3)
+% VECTORIZED: previously called newtonRaphsonP once per index in a
+% scalar for-loop; now a single vectorized call handles every index in
+% this regime at once (see newtonRaphsonP.m - identical per-index
+% results, much faster since Octave has no JIT for scalar loops).
 Pstar(PVRSidx) = 0.5.*(PLim1(PVRSidx) + PRi(PVRSidx)) + 0.5.*(uLim1(PVRSidx) - uRi(PVRSidx)).*rhobar(PVRSidx).*abar(PVRSidx);
-for i = PVRSidx
-    Pstar(i) = newtonRaphsonP(Pstar(i),PLim1(i),PRi(i),rhoLim1(i),rhoRi(i),g,du(i),iter_limit,tol);
+if ~isempty(PVRSidx)
+    Pstar(PVRSidx) = newtonRaphsonP(Pstar(PVRSidx),PLim1(PVRSidx),PRi(PVRSidx),rhoLim1(PVRSidx),rhoRi(PVRSidx),g,du(PVRSidx),iter_limit,tol);
 end
 ustar(PVRSidx) = real(0.5.*(uLim1(PVRSidx) + uRi(PVRSidx)) + 0.5.*(PLim1(PVRSidx) - PRi(PVRSidx))./(rhobar(PVRSidx).*abar(PVRSidx)));
 rhostarL(PVRSidx) = rhoLim1(PVRSidx) + (uLim1(PVRSidx) - ustar(PVRSidx)).*(rhobar(PVRSidx)./abar(PVRSidx));
@@ -56,8 +60,8 @@ astarR(PVRSidx) = real(sqrt(astarR_temp(PVRSidx)));
 % TRRS (Toro 9.4.1)
 z = (g-1)./(2*g);
 Pstar(TRRSidx) = ((aLim1(TRRSidx) + aRi(TRRSidx) - z*g*(uRi(TRRSidx) - uLim1(TRRSidx)))./((aLim1(TRRSidx)./(PLim1(TRRSidx).^z)) + (aRi(TRRSidx)./(PRi(TRRSidx).^z)))).^(1/z);
-for i = TRRSidx
-    Pstar(i) = newtonRaphsonP(Pstar(i),PLim1(i),PRi(i),rhoLim1(i),rhoRi(i),g,du(i),iter_limit,tol);
+if ~isempty(TRRSidx)
+    Pstar(TRRSidx) = newtonRaphsonP(Pstar(TRRSidx),PLim1(TRRSidx),PRi(TRRSidx),rhoLim1(TRRSidx),rhoRi(TRRSidx),g,du(TRRSidx),iter_limit,tol);
 end
 astarL_temp(TRRSidx) = Pstar(TRRSidx)./PLim1(TRRSidx);
 astarL_temp(astarL_temp<=0) = 1e-6;
@@ -80,8 +84,8 @@ gL = @(p) sqrt(AL./(p + BL));
 P0(TSRSidx) = 0.5.*(PLim1(TSRSidx) + PRi(TSRSidx)) + 0.5.*(uLim1(TSRSidx) - uRi(TSRSidx)).*rhobar(TSRSidx).*abar(TSRSidx);
 P0(P0<=0) = 1e-6;
 Pstar(TSRSidx) = (gL(P0(TSRSidx)).*PLim1(TSRSidx) + gR(P0(TSRSidx)).*PRi(TSRSidx) - (uRi(TSRSidx) - uLim1(TSRSidx)))./(gL(P0(TSRSidx)) + gR(P0(TSRSidx)));
-for i = TSRSidx
-    Pstar(i) = newtonRaphsonP(Pstar(i),PLim1(i),PRi(i),rhoLim1(i),rhoRi(i),g,du(i),iter_limit,tol);
+if ~isempty(TSRSidx)
+    Pstar(TSRSidx) = newtonRaphsonP(Pstar(TSRSidx),PLim1(TSRSidx),PRi(TSRSidx),rhoLim1(TSRSidx),rhoRi(TSRSidx),g,du(TSRSidx),iter_limit,tol);
 end
 ustar(TSRSidx) = real(0.5.*(uLim1(TSRSidx) + uRi(TSRSidx)) + 0.5.*((Pstar(TSRSidx)-PRi(TSRSidx)).*gR(P0(TSRSidx)) - (Pstar(TSRSidx)-PLim1(TSRSidx)).*gL(P0(TSRSidx))));
 rhostarL(TSRSidx) = rhoLim1(TSRSidx).*(((Pstar(TSRSidx)./PLim1(TSRSidx))+((g-1)./(g+1)))./(((g-1)./(g+1)).*(Pstar(TSRSidx)./PLim1(TSRSidx)) + 1));

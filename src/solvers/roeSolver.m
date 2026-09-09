@@ -118,9 +118,14 @@ alphamt2 = drhom - dPm./(atim12.^2);
 alphamt1 = 1./(2*atim12.^2).*(dPm - rhotim12.*atim12.*dum);
 alphamt3 = 1./(2*atim12.^2).*(dPm + rhotim12.*atim12.*dum);
 
+% FIXED: previously used (uLi - uRi) here, the sign-flipped negative of
+% dup = uRi - uLi. That swapped the alphapt1/alphapt3 values relative to
+% this same block's im12 formula above and to the (correct) equivalent
+% in roePikeSolver.m. Now uses dup = uRi - uLi consistently.
+dup = uRi - uLi;
 alphapt2 = (rhoRi - rhoLi) - (PRi - PLi)./(atip12.^2);
-alphapt1 = 1./(2*atip12.^2).*((PRi - PLi) - rhotip12.*atip12.*(uLi - uRi));
-alphapt3 = 1./(2*atip12.^2).*((PRi - PLi) + rhotip12.*atip12.*(uLi - uRi));
+alphapt1 = 1./(2*atip12.^2).*((PRi - PLi) - rhotip12.*atip12.*dup);
+alphapt3 = 1./(2*atip12.^2).*((PRi - PLi) + rhotip12.*atip12.*dup);
 
 % step 4.5 entropy fix
 [ustar,astarL,astarR] = adaptiveRiemannSolver(rhoLim1,rhoRi,uLim1,uRi,aLim1,aRi,PLim1,PRi,g);
