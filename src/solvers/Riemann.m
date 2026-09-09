@@ -29,11 +29,16 @@ guess_type = 0;
 Iter_Limit = 10000;
 TOL = 1e-6;
 
+<<<<<<< HEAD
 % FIXED: was `pGuess` (lowercase g), an undefined function - only
 % `Pguess` (capital P) is defined, so this call would error under
 % case-sensitive MATLAB/Octave.
 Pstar = Pguess(guess_type, PL, PR, uL, uR, rhoL, rhoR, g, du);
 [Pstar, err] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
+=======
+Pstar = Pguess(guess_type, PL, PR, uL, uR, rhoL, rhoR, g, du);
+[Pstar, error] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
+>>>>>>> 0044426726c1b608e9272ae189e265c67a0d550d
 
 % FIXED: the original final fallback (guess_type >= 4) plotted the
 % residual function and blocked on input() for a manually-typed pressure
@@ -46,11 +51,40 @@ while (abs(err) > TOL || err < 0) && guess_type < 4
     if guess_type <= 2
         guess_type = guess_type + 1;
         Pstar = Pguess(guess_type, PL, PR, uL, uR, rhoL, rhoR, g, du);
+<<<<<<< HEAD
         [Pstar, err] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
     else
         guess_type = guess_type + 1;
         [Pstar, err] = bisectionP(PL, PR, uL, uR, rhoL, rhoR, g, du, 10*Iter_Limit, TOL);
         [Pstar, err] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
+=======
+        [Pstar, error] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
+    elseif guess_type > 2 && guess_type < 4
+        guess_type = guess_type + 1;
+        disp('Newton''s Method failed... Attempting Bisection Method.');
+        [Pstar, error] = bisectionP(PL, PR, uL, uR, rhoL, rhoR, g, du, 10*Iter_Limit, TOL);
+    else
+        disp('Cannot Numerically find Pstar, Please Solve Graphically');
+        Pstar0 = Pguess(0, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar1 = Pguess(1, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar2 = Pguess(2, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar3 = Pguess(3, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstar4 = Pguess(4, PL, PR, uL, uR, rhoL, rhoR, g, du);
+        Pstara = min([Pstar0,Pstar1,Pstar2,Pstar3,Pstar4]);
+        Pstarb = max([Pstar0,Pstar1,Pstar2,Pstar3,Pstar4]);
+        Pstars = linspace(Pstara, Pstarb, 1000);
+        ErrFunc = zeros(size(Pstars));
+        for i = 1:length(Pstars)
+            ErrFunc(i) = funP(Pstars(i),PL,rhoL,g)+funP(Pstars(i),PR,rhoR,g)+du;
+        end
+        figure(5)
+        plot(Pstars, ErrFunc);
+        grid off;
+        drawnow;
+        Pstar = input('Pstar0 Guess from Graph: ');
+        [Pstar, error] = newtonRaphsonP(Pstar,PL,PR,rhoL,rhoR,g,du,Iter_Limit,TOL);
+        break;
+>>>>>>> 0044426726c1b608e9272ae189e265c67a0d550d
     end
 end
 
